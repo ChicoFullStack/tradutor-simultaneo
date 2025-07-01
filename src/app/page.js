@@ -122,7 +122,14 @@ export default function App() {
         if (!isInCall || !roomId) return;
         pc.current = createPeerConnection();
         const connectWebSocket = () => {
-            const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `ws://localhost:8000`;
+            let wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `ws://localhost:8000`;
+            
+            // CORREÇÃO: Remove a porta explícita para ligações wss://,
+            // pois o navegador usará a porta padrão 443, que é a correta para produção.
+            if (wsUrl.startsWith('wss://') && wsUrl.includes(':8000')) {
+                wsUrl = wsUrl.replace(':8000', '');
+            }
+
             ws.current = new WebSocket(`${wsUrl}/ws/${roomId}/${userId}`);
             
             ws.current.onopen = async () => {
@@ -159,15 +166,15 @@ export default function App() {
                 }
             };
             ws.current.onclose = () => handleHangup();
-            // CORREÇÃO: Mensagem de erro mais detalhada para ajudar no diagnóstico
             ws.current.onerror = (error) => {
                 console.error("WebSocket Error:", error);
                 let errorMessage = "Não foi possível ligar ao servidor WebSocket.\n\n";
                 errorMessage += "Causas comuns:\n";
                 errorMessage += "1. O servidor backend não está a correr ou está inacessível.\n";
                 errorMessage += `2. O URL do WebSocket está incorreto. (A tentar ligar a: ${wsUrl})\n`;
-                errorMessage += "3. Problemas de firewall ou configuração de proxy no servidor (especialmente para ligações wss://).\n";
-                
+                errorMessage += "3. Problemas de firewall ou configuração de proxy no servidor.\n";
+                errorMessage += "4. Se estiver a usar 'wss://', não inclua a porta (ex: :8000) no URL de produção.";
+
                 alert(errorMessage);
                 handleHangup();
             };
