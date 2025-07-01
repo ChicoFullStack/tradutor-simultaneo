@@ -116,14 +116,17 @@ export default function App() {
         };
         if (localStreamRef.current) localStreamRef.current.getTracks().forEach(track => peerConnection.addTrack(track, localStreamRef.current));
         return peerConnection;
-    // CORREÇÃO: Adicionada a dependência 'iceServers' ao array
     }, [iceServers]);
 
     useEffect(() => {
         if (!isInCall || !roomId) return;
         pc.current = createPeerConnection();
         const connectWebSocket = () => {
-            ws.current = new WebSocket(`ws://backtradutor.boloko.shop/ws/${roomId}/${userId}`);
+            // CORREÇÃO: Usa uma variável de ambiente para o URL do WebSocket,
+            // com um fallback para localhost para desenvolvimento.
+            const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `ws://localhost:8000`;
+            ws.current = new WebSocket(`${wsUrl}/ws/${roomId}/${userId}`);
+            
             ws.current.onopen = async () => {
                 const offer = await pc.current.createOffer();
                 await pc.current.setLocalDescription(offer);
@@ -158,6 +161,11 @@ export default function App() {
                 }
             };
             ws.current.onclose = () => handleHangup();
+            ws.current.onerror = (error) => {
+                console.error("WebSocket Error:", error);
+                alert("Não foi possível ligar ao servidor WebSocket. Verifique o URL e se o backend está a correr.");
+                handleHangup();
+            };
         };
         connectWebSocket();
         setParticipants([{ id: userId, name: 'Você', stream: localStreamRef.current, isMuted: true, isSpeaking: false, subtitle: '' }]);
