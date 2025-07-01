@@ -26,8 +26,6 @@ export default function App() {
     const audioContextRef = useRef(null);
     const audioQueuesRef = useRef({});
 
-    // CORREÇÃO: Usar refs para os estados que são lidos dentro de callbacks de WebSocket
-    // para evitar que a conexão seja reiniciada a cada mudança.
     const translationModeRef = useRef(translationMode);
     useEffect(() => {
         translationModeRef.current = translationMode;
@@ -118,7 +116,8 @@ export default function App() {
         };
         if (localStreamRef.current) localStreamRef.current.getTracks().forEach(track => peerConnection.addTrack(track, localStreamRef.current));
         return peerConnection;
-    }, []);
+    // CORREÇÃO: Adicionada a dependência 'iceServers' ao array
+    }, [iceServers]);
 
     useEffect(() => {
         if (!isInCall || !roomId) return;
@@ -146,7 +145,6 @@ export default function App() {
                         }));
                         break;
                     case 'translated_audio':
-                        // CORREÇÃO: Usa a ref para obter o valor mais recente sem causar re-render
                         if (translationModeRef.current === 'audio_and_text') {
                             const audioData = atob(msg.audio_content);
                             const buffer = new ArrayBuffer(audioData.length);
@@ -164,7 +162,6 @@ export default function App() {
         connectWebSocket();
         setParticipants([{ id: userId, name: 'Você', stream: localStreamRef.current, isMuted: true, isSpeaking: false, subtitle: '' }]);
         return () => handleHangup();
-    // CORREÇÃO: Removidos estados que não devem reiniciar a conexão da lista de dependências
     }, [isInCall, roomId, userId, createPeerConnection, handleHangup, processAudioQueue, sourceLang, targetLang]);
 
     const toggleMic = () => { if (localStreamRef.current) { const e = !micActive; localStreamRef.current.getAudioTracks()[0].enabled = e; setMicActive(e); } };

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MicOnIcon, MicOffIcon, CamOnIcon, CamOffIcon, ScreenShareIcon, HangupIcon, CopyIcon, SubtitlesOnlyIcon, VoiceAndSubtitlesIcon } from '@/components/Icons';
+// CORREÇÃO: Removidos os imports dos ícones que não estavam a ser usados diretamente
+import { MicOnIcon, CamOnIcon, ScreenShareIcon, HangupIcon, CopyIcon, SubtitlesOnlyIcon, VoiceAndSubtitlesIcon } from '@/components/Icons';
 
 const LanguageSelector = ({ label, value, onChange, availableLangs }) => (
     <div className="flex flex-col items-center">
@@ -44,8 +45,9 @@ const Controls = ({
                 </button>
             </div>
             <div className="flex items-center justify-center space-x-2 sm:space-x-4 bg-slate-800/50 backdrop-blur-sm p-4 rounded-full shadow-lg">
-                <button onClick={onMicToggle} title={micActive ? "Silenciar" : "Ativar Mic"} className={`control-button ${micActive ? 'active' : ''}`}><MicOnIcon /></button>
-                <button onClick={onCamToggle} title={camActive ? "Desligar" : "Ligar Cam"} className={`control-button ${camActive ? 'active' : ''}`}><CamOnIcon /></button>
+                {/* CORREÇÃO: A lógica dos ícones foi movida para o ficheiro Icons.js para resolver o erro do linter */}
+                <button onClick={onMicToggle} title={micActive ? "Silenciar" : "Ativar Mic"} className={`control-button ${micActive ? 'active' : ''}`}><MicOnIcon active={micActive} /></button>
+                <button onClick={onCamToggle} title={camActive ? "Desligar" : "Ligar Cam"} className={`control-button ${camActive ? 'active' : ''}`}><CamOnIcon active={camActive} /></button>
                 <button onClick={onScreenShareToggle} title={screenShareActive ? "Parar" : "Partilhar Ecrã"} className={`control-button ${screenShareActive ? 'active' : ''}`}><ScreenShareIcon /></button>
                 <button onClick={onTranslationModeToggle} title="Modo de Tradução" className={`control-button ${translationMode === 'audio_and_text' ? 'active' : ''}`}>
                     {translationMode === 'audio_and_text' ? <VoiceAndSubtitlesIcon /> : <SubtitlesOnlyIcon />}

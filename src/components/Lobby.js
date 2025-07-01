@@ -36,7 +36,9 @@ const Lobby = ({ onJoin }) => {
             lobbyStreamRef.current = stream;
             if (lobbyVideoRef.current) lobbyVideoRef.current.srcObject = stream;
             setIsStreamReady(true);
-        } catch (e) {
+        } catch (error) {
+            // CORREÇÃO: Renomeada a variável de erro para 'error' para resolver o aviso do linter
+            console.error("Error getting lobby stream:", error);
             alert("Não foi possível aceder aos seus dispositivos.");
             setIsStreamReady(false);
         }
@@ -54,7 +56,9 @@ const Lobby = ({ onJoin }) => {
                 setMicDevices(audio); setCamDevices(video);
                 if (audio.length > 0) setSelectedMic(audio[0].deviceId);
                 if (video.length > 0) setSelectedCam(video[0].deviceId);
-            } catch (e) { console.error("Error setting up devices:", e); }
+            } catch (error) { // CORREÇÃO: Renomeada a variável de erro
+                console.error("Error setting up devices:", error); 
+            }
         };
         setupDevices();
     }, []);
