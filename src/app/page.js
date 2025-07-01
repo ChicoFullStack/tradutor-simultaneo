@@ -122,10 +122,8 @@ export default function App() {
         if (!isInCall || !roomId) return;
         pc.current = createPeerConnection();
         const connectWebSocket = () => {
-            let wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `ws://localhost:8000`;
+            let wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
             
-            // CORREÇÃO: Remove a porta explícita para ligações wss://,
-            // pois o navegador usará a porta padrão 443, que é a correta para produção.
             if (wsUrl.startsWith('wss://') && wsUrl.includes(':8000')) {
                 wsUrl = wsUrl.replace(':8000', '');
             }
@@ -168,12 +166,14 @@ export default function App() {
             ws.current.onclose = () => handleHangup();
             ws.current.onerror = (error) => {
                 console.error("WebSocket Error:", error);
-                let errorMessage = "Não foi possível ligar ao servidor WebSocket.\n\n";
-                errorMessage += "Causas comuns:\n";
-                errorMessage += "1. O servidor backend não está a correr ou está inacessível.\n";
-                errorMessage += `2. O URL do WebSocket está incorreto. (A tentar ligar a: ${wsUrl})\n`;
-                errorMessage += "3. Problemas de firewall ou configuração de proxy no servidor.\n";
-                errorMessage += "4. Se estiver a usar 'wss://', não inclua a porta (ex: :8000) no URL de produção.";
+                // CORREÇÃO: Mensagem de erro de diagnóstico mais detalhada
+                let errorMessage = "Falha na ligação ao servidor WebSocket.\n\n";
+                errorMessage += `URL de destino: ${wsUrl}\n\n`;
+                errorMessage += "VERIFICAÇÕES A FAZER NO SERVIDOR (BACKEND):\n\n";
+                errorMessage += "1. O PROCESSO DO BACKEND ESTÁ A CORRER?\n   - Verifique os logs da aplicação Python para ver se há erros na inicialização.\n\n";
+                errorMessage += "2. CONFIGURAÇÃO DE PROXY REVERSO (NGINX, CADDY, ETC.)\n   - O proxy está configurado para permitir 'upgrade' de ligações WebSocket? (Verifique os cabeçalhos 'Upgrade' e 'Connection').\n\n";
+                errorMessage += "3. CERTIFICADO SSL/TLS\n   - O domínio tem um certificado SSL válido? Ligações 'wss://' falham sem um certificado correto.\n\n";
+                errorMessage += "4. FIREWALL\n   - A firewall do servidor permite tráfego na porta 443 (para wss://)?\n\n";
 
                 alert(errorMessage);
                 handleHangup();
