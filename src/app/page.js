@@ -122,8 +122,6 @@ export default function App() {
         if (!isInCall || !roomId) return;
         pc.current = createPeerConnection();
         const connectWebSocket = () => {
-            // CORREÇÃO: Usa uma variável de ambiente para o URL do WebSocket,
-            // com um fallback para localhost para desenvolvimento.
             const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `ws://localhost:8000`;
             ws.current = new WebSocket(`${wsUrl}/ws/${roomId}/${userId}`);
             
@@ -161,9 +159,16 @@ export default function App() {
                 }
             };
             ws.current.onclose = () => handleHangup();
+            // CORREÇÃO: Mensagem de erro mais detalhada para ajudar no diagnóstico
             ws.current.onerror = (error) => {
                 console.error("WebSocket Error:", error);
-                alert("Não foi possível ligar ao servidor WebSocket. Verifique o URL e se o backend está a correr.");
+                let errorMessage = "Não foi possível ligar ao servidor WebSocket.\n\n";
+                errorMessage += "Causas comuns:\n";
+                errorMessage += "1. O servidor backend não está a correr ou está inacessível.\n";
+                errorMessage += `2. O URL do WebSocket está incorreto. (A tentar ligar a: ${wsUrl})\n`;
+                errorMessage += "3. Problemas de firewall ou configuração de proxy no servidor (especialmente para ligações wss://).\n";
+                
+                alert(errorMessage);
                 handleHangup();
             };
         };
