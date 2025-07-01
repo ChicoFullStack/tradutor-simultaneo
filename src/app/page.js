@@ -123,7 +123,7 @@ export default function App() {
         if (!isInCall || !roomId) return;
         pc.current = createPeerConnection();
         const connectWebSocket = () => {
-            ws.current = new WebSocket(`https://backtradutor.boloko.shop//ws/${roomId}/${userId}`);
+            ws.current = new WebSocket(`https://backtradutor.boloko.shop/ws/${roomId}/${userId}`);
             ws.current.onopen = async () => {
                 const offer = await pc.current.createOffer();
                 await pc.current.setLocalDescription(offer);
