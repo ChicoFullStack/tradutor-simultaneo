@@ -122,7 +122,7 @@ export default function App() {
         if (!isInCall || !roomId) return;
         pc.current = createPeerConnection();
         const connectWebSocket = () => {
-            let wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
+            let wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || `ws://localhost:8000`;
             
             if (wsUrl.startsWith('wss://') && wsUrl.includes(':8000')) {
                 wsUrl = wsUrl.replace(':8000', '');
@@ -166,14 +166,17 @@ export default function App() {
             ws.current.onclose = () => handleHangup();
             ws.current.onerror = (error) => {
                 console.error("WebSocket Error:", error);
-                // CORREÇÃO: Mensagem de erro de diagnóstico mais detalhada
+                // CORREÇÃO: Mensagem de erro de diagnóstico ainda mais detalhada
                 let errorMessage = "Falha na ligação ao servidor WebSocket.\n\n";
                 errorMessage += `URL de destino: ${wsUrl}\n\n`;
-                errorMessage += "VERIFICAÇÕES A FAZER NO SERVIDOR (BACKEND):\n\n";
-                errorMessage += "1. O PROCESSO DO BACKEND ESTÁ A CORRER?\n   - Verifique os logs da aplicação Python para ver se há erros na inicialização.\n\n";
-                errorMessage += "2. CONFIGURAÇÃO DE PROXY REVERSO (NGINX, CADDY, ETC.)\n   - O proxy está configurado para permitir 'upgrade' de ligações WebSocket? (Verifique os cabeçalhos 'Upgrade' e 'Connection').\n\n";
-                errorMessage += "3. CERTIFICADO SSL/TLS\n   - O domínio tem um certificado SSL válido? Ligações 'wss://' falham sem um certificado correto.\n\n";
-                errorMessage += "4. FIREWALL\n   - A firewall do servidor permite tráfego na porta 443 (para wss://)?\n\n";
+                errorMessage += "Isto é um problema de configuração do servidor (backend), não do frontend.\n\n";
+                errorMessage += "GUIA DE DIAGNÓSTICO DO SERVIDOR:\n\n";
+                errorMessage += "1. O PROCESSO DO BACKEND ESTÁ A CORRER?\n   - Aceda ao servidor e verifique se o processo Uvicorn/Python está ativo.\n\n";
+                errorMessage += "2. CONFIGURAÇÃO DE PROXY REVERSO (NGINX, CADDY, ETC.) - CAUSA MAIS COMUM\n   - O seu proxy precisa de ser configurado para o protocolo WebSocket.\n   - Para NGINX, verifique se a sua configuração inclui:\n";
+                errorMessage += "     proxy_set_header Upgrade $http_upgrade;\n";
+                errorMessage += "     proxy_set_header Connection \"upgrade\";\n\n";
+                errorMessage += "3. CERTIFICADO SSL/TLS\n   - O seu domínio tem um certificado SSL válido? Ligações 'wss://' falham sem um.\n\n";
+                errorMessage += "4. FIREWALL\n   - A firewall do servidor permite tráfego na porta 443 (para wss://)?";
 
                 alert(errorMessage);
                 handleHangup();
