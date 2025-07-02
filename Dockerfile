@@ -1,35 +1,51 @@
-# Etapa 1: build da aplicação
-FROM node:20-alpine AS builder
-
-# Diretório de trabalho
+# Etapa 1: Instalação das Dependências
+FROM node:18-alpine AS deps
 WORKDIR /app
 
-# Copia os arquivos de dependência primeiro (melhor para cache)
+# Copia os ficheiros de manifesto de pacotes
 COPY package.json package-lock.json ./
 
-# Instala as dependências
-RUN npm install
+# Instala as dependências de forma limpa a partir do lockfile
+RUN npm ci
 
-# Copia o restante da aplicação
-COPY . .
+# ----------------------------------------------------------------
 
-# Gera o build do Next.js
-RUN npm run build
-
-# Etapa 2: imagem final para produção
-FROM node:20-alpine AS runner
-
-# Diretório de trabalho
+# Etapa 2: Build da Aplicação
+FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copia apenas o build e dependências necessárias
-COPY --from=builder /app/.next .next
-COPY --from=builder /app/public public
-COPY --from=builder /app/package.json .
-COPY --from=builder /app/node_modules node_modules
+# Copia as dependências já instaladas da etapa anterior
+COPY --from=deps /app/node_modules ./node_modules
+# Copia o resto do código da aplicação
+COPY . .
 
-# Expõe a porta padrão do Next.js
+# Executa o script de build do Next.js
+RUN npm run build
+
+# ----------------------------------------------------------------
+
+# Etapa 3: Imagem Final de Produção
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+# Define o ambiente para produção
+ENV NODE_ENV=production
+
+# Cria um utilizador não-root para maior segurança
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copia os ficheiros de build da etapa 'builder'
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Define o utilizador para executar a aplicação
+USER nextjs
+
+# Expõe a porta em que a aplicação Next.js corre
 EXPOSE 3000
 
-# Comando para iniciar a aplicação
+# Define o comando para iniciar a aplicação
 CMD ["npm", "start"]
