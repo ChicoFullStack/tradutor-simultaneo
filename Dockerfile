@@ -5,8 +5,9 @@ WORKDIR /app
 # Copia os ficheiros de manifesto de pacotes
 COPY package.json package-lock.json ./
 
-# Instala as dependências de forma limpa a partir do lockfile
-RUN npm ci
+# CORREÇÃO: Usa 'npm install' em vez de 'npm ci' para ser mais flexível
+# com pequenas inconsistências no package-lock.json.
+RUN npm install
 
 # ----------------------------------------------------------------
 
